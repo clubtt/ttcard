@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TT Clubkarte</title>
+
+<!-- Load Open Sans from Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #fff;
+  display: flex;
+  flex-direction: column; /* stack top-banner and card vertically */
+  align-items: center;    /* center horizontally */
+  /* remove align-items: center from previous flex row behavior */
+  /* remove justify-content: center; to avoid vertical centering */
+  min-height: 100vh;      /* optional: full viewport height */
+}
+
+
+
+.top-banner {
+  width: 100%;        /* stretch full browser width */
+  max-width: 100vw;   /* never overflow horizontally */
+  height: auto;       /* preserve aspect ratio */
+  display: block;     /* remove inline spacing */
+  margin: 0;          /* no extra margin */
+  border-radius: 0;   /* optional: remove card rounding */
+}
+
+
+/* ───────── CARD ───────── */
+.card-wrapper {
+  width: calc(100vw - 32px); /* horizontal padding */
+  margin-top: 2px; /* spacing from top banner */
+  max-width: 400px;
+  height: auto;
+  aspect-ratio: 400 / 280; /* preserve original ratio */
+  perspective: 1200px;
+}
+
+
+.card {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(.4,.2,.2,1);
+}
+
+.card.flipped {
+  transform: rotateY(180deg);
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+}
+
+.face img {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  display: block;
+}
+
+.face.back {
+  transform: rotateY(180deg);
+}
+
+/* ───────── CONTENT ───────── */
+.card-content {
+  position: absolute;
+  inset: 0;
+  padding: 15px 20px;
+  font-family: 'Open Sans', sans-serif; /* updated font */
+  color: #333;
+  pointer-events: none;
+}
+
+/* ───────── FRONT ───────── */
+.year {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.front-bottom {
+  position: absolute;
+  left: 20px;
+  bottom: 22px;
+}
+
+.front-bottom p {
+  margin: 5px 0 0;
+  font-size: 15px;
+  line-height: 21px;
+}
+
+.front-bottom .name {
+  font-weight: 700;
+}
+
+/* ───────── BACK ───────── */
+
+.back-content {
+  display: flex;
+  font-size: 15px; /* smaller than front */
+  line-height: 20px;
+  flex-direction: column;
+  height: 100%;
+  padding-top: 11px; /* push all content down */
+}
+
+
+.back-first strong {
+  font-weight: 700;
+}
+
+/* Logo space (image contains it) */
+.logo-spacer {
+  height: 42px;
+}
+
+/* Gültig bis */
+.valid {
+  margin-top: 1px; /* pushed further down */
+}
+
+/* Bottom locked text */
+.back-bottom {
+  margin-top: auto; /* keep it bottom-aligned */
+  padding-bottom: 1px; /* pushes #service up 10px from bottom if needed */
+  display: flex;
+  flex-direction: column;
+}
+
+#service {
+  margin-bottom: 1px; /* moves website slightly down */
+}
+
+.website {
+  margin: 2px; /* reset previous margin */
+  font-size: 11px;
+}
+
+/* ───────── TAP ZONE ───────── */
+.tap-zone {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+}
+
+.card:not(.flipped) .back {
+  pointer-events: none;
+}
+.card.flipped .face:not(.back) {
+  pointer-events: none;
+}
+
+.clock {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 30px;
+  margin-top: 26px; /* spacing below card */
+  color: #47ae56;
+  text-align: center;
+}
+
+
+
+</style>
+</head>
+
+<body>
+
+<img src="top-banner.jpg" alt="Top Banner" class="top-banner">
+
+<div class="card-wrapper">
+  <div class="card" id="card">
+
+    <!-- FRONT -->
+    <div class="face">
+      <img src="card-front.png">
+
+      <div class="card-content">
+        <div class="year" id="year"></div>
+
+        <div class="front-bottom">
+          <p class="name" id="name"></p>
+          <p id="kundennummer"></p>
+        </div>
+      </div>
+
+      <div class="tap-zone" onclick="flip()"></div>
+    </div>
+
+    <!-- BACK -->
+    <div class="face back">
+      <img src="card-back.png">
+
+      <div class="card-content back-content">
+
+        <p class="back-first">
+          <strong>Exklusiv</strong> für Abonnenten der
+        </p>
+
+        <div class="logo-spacer"></div>
+
+        <p class="valid" id="valid"></p>
+
+        <div class="back-bottom">
+          <p id="service"></p>
+          <p class="website" id="website"></p>
+        </div>
+
+      </div>
+
+      <div class="tap-zone" onclick="flip()"></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="clock" class="clock"></div>
+
+
+<script>
+// Get URL parameters
+const params = new URLSearchParams(window.location.search);
+const userName = params.get("name") || "Roman Nössing";
+const userNumber = params.get("kundennummer") || "TT-7VC4DJ";
+
+// Fill the card with either URL values or default
+document.getElementById("name").innerText = userName;
+document.getElementById("kundennummer").innerText = "Kundennummer: " + userNumber;
+
+const DATA = {
+  year: "2026",
+  valid: "Gültig bis: 31.01.2026",
+  service: "TT-Club-Serviceline: 050403 - 1800",
+  website: "club.tt.com"
+};
+
+document.getElementById("year").innerText = DATA.year;
+document.getElementById("valid").innerText = DATA.valid;
+document.getElementById("service").innerText = DATA.service;
+document.getElementById("website").innerText = DATA.website;
+
+
+function flip() {
+  card.classList.toggle("flipped");
+}
+
+
+function updateClock() {
+  const now = new Date();
+
+  const day = String(now.getDate()).padStart(2, '0');
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const month = monthNames[now.getMonth()];
+  const year = now.getFullYear();
+
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+
+  const formatted = `${day} ${month} ${year} - ${hours}:${minutes}:${seconds}`;
+  document.getElementById('clock').innerText = formatted;
+}
+
+// update every second
+setInterval(updateClock, 1000);
+updateClock(); // initial call
+
+</script>
+
+</body>
+</html>
